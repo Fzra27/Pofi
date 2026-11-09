@@ -886,3 +886,27 @@ footer {
 .phone-view aside .stats {
   margin-top: 18px;
 }
+.early-walk {
+  border: 1px solid #cbd5c0;
+  background: #eef1e5;
+  color: #405e43;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 11px;
+  max-width: 170px;
+}
+.early-walk:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.early-walk[hidden] {
+  display: none;
+}
+@media (max-width: 760px) {
+  .controls {
+    flex-wrap: wrap;
+  }
+  .early-walk {
+    max-width: none;
+  }
+}

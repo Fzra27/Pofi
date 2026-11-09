@@ -67,7 +67,7 @@ function alertEvent(event) {
   toast(
     walk
       ? "Time to stand up and walk!"
-      : "Your walk is done. Come back refreshed!",
+      : "Your walk is done. Your next focus session has started.",
   );
   if (
     !window.pofiDesktop &&
@@ -173,6 +173,9 @@ function render() {
         : s.phaseStarted
           ? "Continue focusing →"
           : "Start focusing →";
+  $("early-walk").hidden = mode !== "focus" || expired;
+  $("early-walk").disabled = !connected || !s.phaseStarted;
+  $("early-walk").textContent = `Start ${s.breakMinutes}-min walk early`;
   $("toggle").disabled = !connected;
   $("speech").innerHTML = expired
     ? mode === "focus"
@@ -185,7 +188,7 @@ function render() {
     ? "Overtime counts toward your session total. You choose when to switch."
     : mode === "focus"
       ? `${s.focusMinutes} minutes of focus. ${s.breakMinutes} minutes on your feet.`
-      : "Keep walking. The chime is a reminder, not an automatic switch.";
+      : "Your next focus session starts automatically when this walk ends.";
   $("mascot-caption").textContent = overdue
     ? "Getting a little wilted… let’s walk!"
     : mode === "break"
@@ -257,7 +260,10 @@ $("toggle").onclick = async () => {
   await command("toggle");
 };
 $("reset").onclick = () => command("reset");
-$("skip").onclick = () => command("skip");
+$("early-walk").onclick = () => {
+  keepAwake();
+  command("early-walk");
+};
 $("sound").onclick = () => {
   unlockAudio();
   command("sound", !state?.sound);

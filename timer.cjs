@@ -61,9 +61,28 @@ class Timer extends EventEmitter {
     const delta = Math.max(0, now - this.lastTick);
     this.lastTick = now;
     if (!s.running) return;
-    s.phaseMs += delta;
-    if (s.mode === "focus") s.focusMs += delta;
-    else s.walkMs += delta;
+    const walkDuration = s.breakMinutes * 60000;
+    if (s.mode === "break" && s.phaseMs + delta >= walkDuration) {
+      const walkDelta = walkDuration - s.phaseMs;
+      const focusDelta = delta - walkDelta;
+      s.walkMs += walkDelta;
+      s.phaseMs = walkDuration;
+      s.expired = true;
+      this.finish(now - focusDelta);
+      this.phase("focus", true);
+      s.phaseMs = focusDelta;
+      s.focusMs += focusDelta;
+      s.remaining = Math.max(
+        0,
+        Math.ceil((s.focusMinutes * 60000 - focusDelta) / 1000),
+      );
+      this.announce("return");
+      this.emit("change");
+    } else {
+      s.phaseMs += delta;
+      if (s.mode === "focus") s.focusMs += delta;
+      else s.walkMs += delta;
+    }
     const duration =
       (s.mode === "focus" ? s.focusMinutes : s.breakMinutes) * 60000;
     s.remaining = Math.max(0, Math.ceil((duration - s.phaseMs) / 1000));
@@ -72,10 +91,11 @@ class Timer extends EventEmitter {
       s.expired = true;
       s.overdueAt = now - Math.max(0, s.phaseMs - duration);
       if (s.mode === "focus") s.completed++;
-      this.announce(s.mode === "focus" ? "walk" : "return");
+      this.announce("walk");
     }
   }
-  finish() {
+
+  finish(endedAt = this.now()) {
     const s = this.state;
     if (s.phaseStarted)
       s.history.push({
@@ -87,7 +107,7 @@ class Timer extends EventEmitter {
             (s.mode === "focus" ? s.focusMinutes : s.breakMinutes) * 60000,
         ),
         completed: s.expired,
-        endedAt: this.now(),
+        endedAt,
       });
   }
   phase(mode, running = false) {
@@ -127,9 +147,15 @@ class Timer extends EventEmitter {
         this.finish();
         this.phase("focus");
         break;
+      case "early-walk":
+        if (s.mode !== "focus" || !s.phaseStarted)
+          throw new Error("Start a focus session before taking an early walk.");
+        this.finish();
+        this.phase("break", true);
+        break;
       case "skip":
         this.finish();
-        this.phase(s.mode === "focus" ? "break" : "focus");
+        this.phase(s.mode === "focus" ? "break" : "focus", true);
         break;
       case "settings":
         if (s.phaseStarted)

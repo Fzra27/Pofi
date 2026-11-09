@@ -29,8 +29,7 @@ test("paired clients share one timer, unpaired requests are rejected, session cl
     const mobile = await (await fetch(base + "/api/state", { headers })).json();
     assert.equal(mobile.focusMinutes, 25);
     assert(mobile.running);
-    await post("skip");
-    await post("toggle");
+    await post("early-walk");
     assert.equal(
       (await (await fetch(base + "/api/state", { headers })).json()).mode,
       "break",
