@@ -3,37 +3,51 @@ class Timer extends EventEmitter {
   constructor({ now = Date.now, saved = {} } = {}) {
     super();
     this.now = now;
+    this.lastTick = now();
+    const focusMinutes =
+      Number.isInteger(saved.focusMinutes) &&
+      saved.focusMinutes >= 1 &&
+      saved.focusMinutes <= 120
+        ? saved.focusMinutes
+        : 45;
+    const breakMinutes =
+      Number.isInteger(saved.breakMinutes) &&
+      saved.breakMinutes >= 1 &&
+      saved.breakMinutes <= 30
+        ? saved.breakMinutes
+        : 5;
     this.state = {
-      focusMinutes: 45,
-      breakMinutes: 5,
+      focusMinutes,
+      breakMinutes,
+      sound: typeof saved.sound === "boolean" ? saved.sound : true,
       mode: "focus",
-      remaining: 2700,
+      remaining: focusMinutes * 60,
       running: false,
-      deadline: null,
-      overdueAt: null,
+      expired: false,
+      overtime: 0,
+      phaseMs: 0,
+      focusMs: 0,
+      walkMs: 0,
       completed: 0,
-      focusTotal: 0,
-      date: this.day(),
-      sound: true,
+      sessions: 0,
+      phaseStarted: false,
+      history: [],
       eventId: 0,
       lastEvent: null,
-      ...saved,
+      overdueAt: null,
     };
-    this.rollDay();
   }
-  day() {
-    return new Date(this.now()).toLocaleDateString("en-CA");
-  }
-  rollDay() {
-    if (this.state.date !== this.day()) {
-      this.state.date = this.day();
-      this.state.completed = 0;
-      this.state.focusTotal = 0;
-    }
+  preferences() {
+    const { focusMinutes, breakMinutes, sound } = this.state;
+    return { focusMinutes, breakMinutes, sound };
   }
   snapshot() {
     this.tick();
-    return { ...this.state, serverNow: this.now() };
+    return {
+      ...this.state,
+      history: this.state.history.map((h) => ({ ...h })),
+      serverNow: this.now(),
+    };
   }
   announce(type) {
     const s = this.state;
@@ -42,27 +56,54 @@ class Timer extends EventEmitter {
     this.emit("alert", s.lastEvent);
   }
   tick() {
+    const s = this.state,
+      now = this.now();
+    const delta = Math.max(0, now - this.lastTick);
+    this.lastTick = now;
+    if (!s.running) return;
+    s.phaseMs += delta;
+    if (s.mode === "focus") s.focusMs += delta;
+    else s.walkMs += delta;
+    const duration =
+      (s.mode === "focus" ? s.focusMinutes : s.breakMinutes) * 60000;
+    s.remaining = Math.max(0, Math.ceil((duration - s.phaseMs) / 1000));
+    s.overtime = Math.max(0, Math.floor((s.phaseMs - duration) / 1000));
+    if (!s.expired && s.phaseMs >= duration) {
+      s.expired = true;
+      s.overdueAt = now - Math.max(0, s.phaseMs - duration);
+      if (s.mode === "focus") s.completed++;
+      this.announce(s.mode === "focus" ? "walk" : "return");
+    }
+  }
+  finish() {
     const s = this.state;
-    this.rollDay();
-    if (s.running) {
-      s.remaining = Math.max(0, Math.ceil((s.deadline - this.now()) / 1000));
-      if (s.remaining === 0) {
-        s.running = false;
-        s.deadline = null;
-        if (s.mode === "focus") {
-          s.completed++;
-          s.focusTotal += s.focusMinutes;
-          s.mode = "ready";
-          s.overdueAt = this.now();
-          this.announce("walk");
-        } else {
-          s.mode = "focus";
-          s.remaining = s.focusMinutes * 60;
-          s.overdueAt = null;
-          this.announce("return");
-        }
-        this.emit("change");
-      }
+    if (s.phaseStarted)
+      s.history.push({
+        mode: s.mode,
+        durationMs: s.phaseMs,
+        extraMs: Math.max(
+          0,
+          s.phaseMs -
+            (s.mode === "focus" ? s.focusMinutes : s.breakMinutes) * 60000,
+        ),
+        completed: s.expired,
+        endedAt: this.now(),
+      });
+  }
+  phase(mode, running = false) {
+    const s = this.state;
+    s.mode = mode;
+    s.phaseMs = 0;
+    s.phaseStarted = false;
+    s.running = running;
+    s.expired = false;
+    s.overtime = 0;
+    s.overdueAt = null;
+    s.remaining = (mode === "focus" ? s.focusMinutes : s.breakMinutes) * 60;
+    this.lastTick = this.now();
+    if (running) {
+      s.phaseStarted = true;
+      if (mode === "focus") s.sessions++;
     }
   }
   command(action, value) {
@@ -70,45 +111,28 @@ class Timer extends EventEmitter {
     const s = this.state;
     switch (action) {
       case "toggle":
-        if (s.running) {
-          s.running = false;
-          s.deadline = null;
+        if (s.expired) {
+          this.finish();
+          this.phase(s.mode === "focus" ? "break" : "focus", true);
         } else {
-          if (s.mode === "ready") {
-            s.mode = "break";
-            s.remaining = s.breakMinutes * 60;
-            s.overdueAt = null;
+          if (!s.phaseStarted) {
+            s.phaseStarted = true;
+            if (s.mode === "focus") s.sessions++;
           }
-          s.running = true;
-          s.deadline = this.now() + s.remaining * 1000;
+          s.running = !s.running;
+          this.lastTick = this.now();
         }
         break;
       case "reset":
-        s.mode = "focus";
-        s.running = false;
-        s.deadline = null;
-        s.remaining = s.focusMinutes * 60;
-        s.overdueAt = null;
+        this.finish();
+        this.phase("focus");
         break;
       case "skip":
-        s.running = false;
-        s.deadline = null;
-        if (s.mode === "focus") {
-          s.mode = "ready";
-          s.remaining = 0;
-          s.overdueAt = this.now();
-        } else {
-          s.mode = "focus";
-          s.remaining = s.focusMinutes * 60;
-          s.overdueAt = null;
-        }
+        this.finish();
+        this.phase(s.mode === "focus" ? "break" : "focus");
         break;
       case "settings":
-        if (
-          s.running ||
-          s.mode !== "focus" ||
-          s.remaining !== s.focusMinutes * 60
-        )
+        if (s.phaseStarted)
           throw new Error("Reset the timer before changing durations.");
         if (
           !value ||
@@ -124,7 +148,7 @@ class Timer extends EventEmitter {
           );
         s.focusMinutes = value.focusMinutes;
         s.breakMinutes = value.breakMinutes;
-        s.remaining = s.focusMinutes * 60;
+        this.phase("focus");
         break;
       case "sound":
         if (typeof value !== "boolean")

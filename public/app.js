@@ -143,56 +143,83 @@ function render() {
       : s.remaining,
     mode = s.mode;
   const now = s.serverNow + elapsed * 1000;
-  const overdue = mode === "ready" && now - s.overdueAt > 60000;
+  const expired = s.expired;
+  const extra = s.overtime + (s.running && expired ? Math.floor(elapsed) : 0);
+  const displaySeconds = expired ? extra : remaining;
+  const overdue = mode === "focus" && expired && extra >= 60;
   document.body.classList.toggle("break", mode === "break" && s.running);
   document.body.classList.toggle("overdue", overdue);
-  const m = Math.floor(remaining / 60),
-    sec = remaining % 60;
+  const m = Math.floor(displaySeconds / 60),
+    sec = displaySeconds % 60;
   $("timer").innerHTML =
-    `${String(m).padStart(2, "0")}<span>:</span>${String(sec).padStart(2, "0")}`;
+    `${expired ? "+" : ""}${String(m).padStart(2, "0")}<span>:</span>${String(sec).padStart(2, "0")}`;
   $("progress").style.width =
-    `${mode === "ready" ? 100 : 100 * (1 - remaining / ((mode === "break" ? s.breakMinutes : s.focusMinutes) * 60))}%`;
-  $("mode-label").textContent =
-    mode === "focus"
+    `${expired ? 100 : 100 * (1 - remaining / ((mode === "break" ? s.breakMinutes : s.focusMinutes) * 60))}%`;
+  $("mode-label").textContent = expired
+    ? mode === "focus"
+      ? "EXTRA FOCUS TIME"
+      : "EXTRA WALKING TIME"
+    : mode === "focus"
       ? "FOCUS TIME"
-      : mode === "ready"
-        ? "TIME TO STAND UP!"
-        : "WALKING BREAK";
-  $("toggle").textContent = s.running
-    ? "Pause Ⅱ"
-    : mode === "ready"
-      ? "I’m up. Let’s walk →"
+      : "WALKING BREAK";
+  $("toggle").textContent = expired
+    ? mode === "focus"
+      ? "I’m up. Start walking →"
+      : "I’m back. Start focusing →"
+    : s.running
+      ? "Pause Ⅱ"
       : mode === "break"
-        ? "Continue walking →"
-        : remaining === s.focusMinutes * 60
-          ? "Start focusing →"
-          : "Continue focusing →";
+        ? "Start walking →"
+        : s.phaseStarted
+          ? "Continue focusing →"
+          : "Start focusing →";
   $("toggle").disabled = !connected;
-  $("speech").innerHTML =
-    mode === "focus"
+  $("speech").innerHTML = expired
+    ? mode === "focus"
+      ? "Still working? Every extra minute counts.<span>Start your walk whenever you’re ready.</span>"
+      : "Enjoying your walk? Take your time.<span>Come back when you’re ready.</span>"
+    : mode === "focus"
       ? "You bring the focus. I’ll keep the time.<span>One small thing at a time.</span>"
-      : mode === "ready"
-        ? "We’re growing roots! Time to get up.<span>A little walk will do us good.</span>"
-        : "Look at us go! Keep on walking.<span>Every little step counts.</span>";
-  $("timer-note").textContent =
-    mode === "focus"
+      : "Look at us go! Keep on walking.<span>Every little step counts.</span>";
+  $("timer-note").textContent = expired
+    ? "Overtime counts toward your session total. You choose when to switch."
+    : mode === "focus"
       ? `${s.focusMinutes} minutes of focus. ${s.breakMinutes} minutes on your feet.`
-      : mode === "ready"
-        ? "Your break starts when you tap “I’m up”."
-        : "Step away from the screen. Come back when the chime rings.";
+      : "Keep walking. The chime is a reminder, not an automatic switch.";
   $("mascot-caption").textContent = overdue
     ? "Getting a little wilted… let’s walk!"
     : mode === "break"
       ? "A little movement brings me back to life."
       : "Happy potato. Happy you.";
   $("health").textContent = overdue ? "A little wilted" : "Feeling fresh";
-  $("session").textContent = `Round ${s.completed + 1}`;
-  $("completed").textContent = s.completed;
-  $("minutes").innerHTML = `${s.focusTotal} <small>min</small>`;
+  $("session").textContent = `Focus session ${s.sessions || 1}`;
+  $("completed").textContent = s.sessions;
+  const liveMs = s.running ? Math.floor(elapsed * 1000) : 0;
+  const duration = (ms) => {
+    const seconds = Math.floor(ms / 1000);
+    return `${Math.floor(seconds / 3600)}h ${String(Math.floor(seconds / 60) % 60).padStart(2, "0")}m ${String(seconds % 60).padStart(2, "0")}s`;
+  };
+  $("minutes").textContent = duration(
+    s.focusMs + (s.mode === "focus" ? liveMs : 0),
+  );
+  $("walk-total").textContent = duration(
+    s.walkMs + (s.mode === "break" ? liveMs : 0),
+  );
+  const historyKey = JSON.stringify(s.history);
+  if ($("session-history").dataset.history !== historyKey) {
+    $("session-history").dataset.history = historyKey;
+    $("session-history").replaceChildren(
+      ...s.history.map((entry, index) => {
+        const li = document.createElement("li");
+        li.textContent = `${index + 1}. ${entry.mode === "focus" ? "Focus" : "Walk"} · ${duration(entry.durationMs)}${entry.extraMs ? ` (+${duration(entry.extraMs)} extra)` : ""}${entry.completed ? "" : " · ended early"}`;
+        return li;
+      }),
+    );
+  }
+
   $("sound").innerHTML = `♪ <span>Sound ${s.sound ? "on" : "off"}</span>`;
   $("sound").setAttribute("aria-pressed", String(s.sound));
-  const locked =
-    mode !== "focus" || s.running || s.remaining !== s.focusMinutes * 60;
+  const locked = s.phaseStarted || s.running;
   for (const name of ["focus", "break"]) {
     const input = $(name + "-duration");
     if (document.activeElement !== input) input.value = s[name + "Minutes"];
@@ -209,7 +236,7 @@ function render() {
     b.classList.toggle("selected", Number(b.dataset.focus) === s.focusMinutes);
   });
   $("rhythm").textContent = `${s.focusMinutes} / ${s.breakMinutes}`;
-  document.title = `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")} · Pofi`;
+  document.title = `${expired ? "+" : ""}${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")} · Pofi`;
 }
 $("enable-phone-audio").onclick = () => {
   unlockAudio();
@@ -311,3 +338,36 @@ $("date").textContent = new Date().toLocaleDateString("en-GB", {
 sync();
 setInterval(sync, 1000);
 setInterval(render, 250);
+
+const updateButton = $("update-button");
+if (window.pofiDesktop?.checkUpdate) {
+  updateButton.hidden = false;
+  let available = false;
+  window.pofiDesktop.onUpdate((message) => {
+    $("update-status").textContent = message;
+  });
+  updateButton.onclick = async () => {
+    updateButton.disabled = true;
+    try {
+      if (available) {
+        const result = await window.pofiDesktop.installUpdate();
+        if (result.installed) {
+          available = false;
+          updateButton.textContent = "Installed — reopen Pofi";
+        } else if (result.cancelled)
+          $("update-status").textContent =
+            "Update cancelled. Your timer is unchanged.";
+      } else {
+        const result = await window.pofiDesktop.checkUpdate();
+        available = result.available;
+        updateButton.textContent = available
+          ? `Install Pofi ${result.version}`
+          : "Check for updates";
+      }
+    } catch (e) {
+      $("update-status").textContent = e.message;
+    } finally {
+      updateButton.disabled = false;
+    }
+  };
+}

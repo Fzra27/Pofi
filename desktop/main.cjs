@@ -6,6 +6,8 @@ const {
   Tray,
   nativeImage,
   powerSaveBlocker,
+  ipcMain,
+  dialog,
 } = require("electron");
 const path = require("node:path");
 const { startServer } = require("../server.cjs");
@@ -51,8 +53,8 @@ else {
       });
       win.on("close", (e) => {
         if (!quitting) {
-          e.preventDefault();
-          win.hide();
+          quitting = true;
+          app.quit();
         }
       });
       win.setMenuBarVisibility(false);
@@ -103,6 +105,33 @@ else {
           powerSaveBlocker.stop(blocker);
           blocker = undefined;
         }
+      });
+      const { Updater } = require("./updater.cjs");
+      const updater = new Updater({
+        workDir: path.join(app.getPath("userData"), "updates"),
+        currentVersion: app.getVersion(),
+        onProgress: (message) => win.webContents.send("pofi-update", message),
+      });
+      const trusted = (event) =>
+        event.sender === win.webContents &&
+        event.senderFrame === win.webContents.mainFrame;
+      ipcMain.handle("pofi-update-check", async (event) => {
+        if (!trusted(event)) throw new Error("Not allowed");
+        return updater.check();
+      });
+      ipcMain.handle("pofi-update-install", async (event) => {
+        if (!trusted(event)) throw new Error("Not allowed");
+        const answer = await dialog.showMessageBox(win, {
+          type: "question",
+          buttons: ["Cancel", "Install update"],
+          defaultId: 0,
+          cancelId: 0,
+          message: "Download, build and install Pofi from GitHub?",
+          detail:
+            "Your current session ends when you quit. Ubuntu will ask for your password to install the package. Reopen Pofi after installation.",
+        });
+        if (answer.response !== 1) return { cancelled: true };
+        return updater.install();
       });
       await win.loadURL(service.url);
     })

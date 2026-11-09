@@ -4,7 +4,7 @@ const { test } = require("node:test"),
   os = require("node:os"),
   path = require("node:path");
 const { startServer } = require("../server.cjs");
-test("paired clients share one timer, unpaired requests are rejected, state survives restart", async () => {
+test("paired clients share one timer, unpaired requests are rejected, session clears on restart while preferences persist", async () => {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "pofi-test-"));
   let app = await startServer({ port: 0, host: "127.0.0.1", dataDir });
   try {
@@ -50,7 +50,16 @@ test("paired clients share one timer, unpaired requests are rejected, state surv
     }
     await app.close();
     app = await startServer({ port: 0, host: "127.0.0.1", dataDir });
-    assert.equal(app.timer.state.mode, "break");
+    assert.equal(app.timer.state.mode, "focus");
+    assert.equal(app.timer.state.sessions, 0);
+    assert.equal(app.timer.state.walkMs, 0);
+    assert.equal(app.timer.state.focusMs, 0);
+    assert.deepEqual(
+      Object.keys(
+        JSON.parse(fs.readFileSync(path.join(dataDir, "state.json"), "utf8")),
+      ).sort(),
+      ["breakMinutes", "focusMinutes", "sound"],
+    );
     assert.equal(app.timer.state.breakMinutes, 7);
   } finally {
     await app.close();

@@ -286,12 +286,24 @@
             </section>
             <section class="stats">
               <div>
-                <strong id="completed">0</strong><span>rounds completed</span>
+                <strong id="completed">0</strong><span>focus sessions</span>
               </div>
               <div>
                 <strong id="minutes">0 <small>min</small></strong
-                ><span>focused today</span>
+                ><span>total focus this session</span>
               </div>
+            </section>
+            <section class="session-summary">
+              <strong id="walk-total">0h 00m 00s</strong>
+              <p>total walking this session</p>
+              <details>
+                <summary>Session log</summary>
+                <ol id="session-history"></ol>
+              </details>
+              <small
+                >Includes overtime. Cleared when you quit Pofi; refreshing or
+                minimizing keeps it.</small
+              >
             </section>
             <p class="aside-note">
               Less about doing more.<br /><em>More about feeling better.</em>
@@ -305,6 +317,10 @@
           ><span id="rhythm">45 / 5</span> &nbsp; · &nbsp; YOUR NATURAL
           RHYTHM</span
         >
+        <div class="updater">
+          <button id="update-button" hidden>Check for updates</button
+          ><span id="update-status" role="status"></span>
+        </div>
       </footer>
     </div>
     <dialog id="pair-dialog">

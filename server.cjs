@@ -21,7 +21,7 @@ async function startServer({
   const token = crypto.randomBytes(24).toString("hex");
   const persist = () => {
     const file = path.join(dataDir, "state.json");
-    fs.writeFileSync(file + ".tmp", JSON.stringify(timer.state), {
+    fs.writeFileSync(file + ".tmp", JSON.stringify(timer.preferences()), {
       mode: 0o600,
     });
     fs.renameSync(file + ".tmp", file);
