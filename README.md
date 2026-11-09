@@ -4,10 +4,10 @@ A little focus. A little movement. An English-language focus companion for **Ubu
 
 ## Ubuntu: install the desktop app
 
-Download `pofi_1.2.0_amd64.deb` (64-bit Intel/AMD Ubuntu 22.04 or newer) and install:
+Download `pofi_1.2.1_amd64.deb` (64-bit Intel/AMD Ubuntu 22.04 or newer) and install:
 
 ```sh
-sudo apt install ./pofi_1.2.0_amd64.deb
+sudo apt install ./pofi_1.2.1_amd64.deb
 ```
 
 Open **Pofi** from Applications. It includes its runtime: no Node.js installation is needed for the `.deb`. Focus and break completion use Ubuntu's native notification service and an audible chime. Allow Pofi notifications and sound in Ubuntu Settings; Do Not Disturb may suppress banners. Closing the window or choosing **Quit Pofi** ends the app and clears session statistics. Minimize the window to keep the session running. The computer must remain awake. Phone pairing uses port **4317**.
@@ -17,6 +17,8 @@ Open **Pofi** from Applications. It includes its runtime: no Node.js installatio
 Drag the Focus slider (1–120 minutes) and Walk slider (1–30 minutes). Presets: 25, 45, 60 minutes. Default: 45 / 5. Durations are locked during a session; reset before changing them. Space starts/pauses. The round-completion count measures completed focus periods. Skipping does not count as completing a focus period.
 
 When focus finishes, Pofi chimes once and keeps counting **+ overtime** in the focus phase. Click **“I’m up. Start walking”** to start the walk. You can also click **“Start 5-min walk early”** before the focus countdown ends: it records the actual work done and immediately starts a full walking break, without pausing or carrying the unfinished focus time into the walk. The default break is 5 minutes; a custom Walk duration still applies.
+
+**Return early:** During a walk, click **“Start focusing early”** to record the actual walking time and immediately start a fresh full Focus period. This also works when the walk is paused; unused walking time is not counted or carried over.
 
 When the walk finishes, Pofi chimes and **automatically starts a new full focus period using your selected Focus duration**. For example, leaving a 45-minute focus period with 5 minutes remaining starts a fresh 5-minute walk, then a fresh 45-minute focus period. Late timer ticks are split at the walking deadline so time is counted once in the correct phase. Focus overtime still requires a manual switch to walking. No window is raised automatically; notifications raise the window only if you click them. Pause remains a separate action. Ignoring the focus reminder for a minute makes Pofi wilt; starting the walk revives the potato.
 
@@ -41,7 +43,7 @@ git pull --ff-only
 npm ci
 npm test
 npm run build:linux
-sudo apt install ./dist/pofi_1.2.0_amd64.deb
+sudo apt install ./dist/pofi_1.2.1_amd64.deb
 ```
 
 ## iPhone: pair with the QR code
@@ -66,7 +68,7 @@ npm run desktop
 npm run build:linux
 ```
 
-`postinstall` downloads the pinned official Electron binary with checksum verification. Behind a proxy, Node 24 can use inherited proxy settings with `NODE_USE_ENV_PROXY=1 npm ci`; keep your normal CA trust settings. `npm run build:linux` creates `dist/pofi_1.2.0_amd64.deb` without publishing. For web-only development, `npm start` prints a private local pairing URL. Use that URL, not a static file server; the Node process owns the synchronized timer. `PORT` and `POFI_DATA_DIR` are optional server overrides. Desktop state lives in Electron's per-user application data directory.
+`postinstall` downloads the pinned official Electron binary with checksum verification. Behind a proxy, Node 24 can use inherited proxy settings with `NODE_USE_ENV_PROXY=1 npm ci`; keep your normal CA trust settings. `npm run build:linux` creates `dist/pofi_1.2.1_amd64.deb` without publishing. For web-only development, `npm start` prints a private local pairing URL. Use that URL, not a static file server; the Node process owns the synchronized timer. `PORT` and `POFI_DATA_DIR` are optional server overrides. Desktop state lives in Electron's per-user application data directory.
 
 ## Validation
 

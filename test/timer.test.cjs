@@ -136,3 +136,43 @@ test("invalid duration settings and changes during active phases are rejected", 
     t.command("settings", { focusMinutes: 25, breakMinutes: 5 }),
   );
 });
+
+test("returning early records only actual walking time and starts the full custom focus immediately", () => {
+  let now = 0;
+  const t = new Timer({ now: () => now });
+  assert.throws(() => t.command("early-focus"));
+  t.command("settings", { focusMinutes: 25, breakMinutes: 5 });
+  t.command("toggle");
+  now = 60000;
+  t.command("early-walk");
+  now += 120000;
+  assert.equal(t.snapshot().remaining, 180);
+  t.command("early-focus");
+  assert.equal(t.state.mode, "focus");
+  assert(t.state.running);
+  assert.equal(t.state.remaining, 25 * 60);
+  assert.equal(t.state.walkMs, 120000);
+  assert.equal(t.state.focusMs, 60000);
+  assert.equal(t.state.history[1].durationMs, 120000);
+  assert.equal(t.state.history[1].completed, false);
+  assert.equal(t.state.sessions, 2);
+  assert.throws(() => t.command("early-focus"));
+  now += 10000;
+  assert.equal(t.snapshot().remaining, 25 * 60 - 10);
+});
+test("returning from a paused walk excludes paused time and resumes fresh focus running", () => {
+  let now = 0;
+  const t = new Timer({ now: () => now });
+  t.command("toggle");
+  now = 10000;
+  t.command("early-walk");
+  now += 30000;
+  t.command("toggle");
+  now += 90000;
+  t.command("early-focus");
+  assert.equal(t.state.walkMs, 30000);
+  assert.equal(t.state.history[1].durationMs, 30000);
+  assert.equal(t.state.remaining, 45 * 60);
+  assert(t.state.running);
+  assert.equal(t.state.sessions, 2);
+});

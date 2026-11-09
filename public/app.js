@@ -173,6 +173,8 @@ function render() {
         : s.phaseStarted
           ? "Continue focusing →"
           : "Start focusing →";
+  $("early-focus").hidden = mode !== "break";
+  $("early-focus").disabled = !connected || !s.phaseStarted;
   $("early-walk").hidden = mode !== "focus" || expired;
   $("early-walk").disabled = !connected || !s.phaseStarted;
   $("early-walk").textContent = `Start ${s.breakMinutes}-min walk early`;
@@ -258,6 +260,10 @@ $("toggle").onclick = async () => {
   )
     Notification.requestPermission().catch(() => {});
   await command("toggle");
+};
+$("early-focus").onclick = () => {
+  keepAwake();
+  command("early-focus");
 };
 $("reset").onclick = () => command("reset");
 $("early-walk").onclick = () => {

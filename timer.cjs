@@ -153,6 +153,12 @@ class Timer extends EventEmitter {
         this.finish();
         this.phase("break", true);
         break;
+      case "early-focus":
+        if (s.mode !== "break" || !s.phaseStarted)
+          throw new Error("Start a walking break before returning early.");
+        this.finish();
+        this.phase("focus", true);
+        break;
       case "skip":
         this.finish();
         this.phase(s.mode === "focus" ? "break" : "focus", true);
