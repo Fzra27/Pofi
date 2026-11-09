@@ -47,8 +47,10 @@ test("paired clients share one timer, unpaired requests are rejected, session cl
         app.token,
       );
     }
+    const originalToken = app.token;
     await app.close();
     app = await startServer({ port: 0, host: "127.0.0.1", dataDir });
+    assert.equal(app.token, originalToken);
     assert.equal(app.timer.state.mode, "focus");
     assert.equal(app.timer.state.sessions, 0);
     assert.equal(app.timer.state.walkMs, 0);

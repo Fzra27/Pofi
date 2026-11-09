@@ -5,6 +5,7 @@ const http = require("node:http"),
   crypto = require("node:crypto");
 const QRCode = require("qrcode");
 const { Timer } = require("./timer.cjs");
+const { RemoteBridge } = require("./remote.cjs");
 async function startServer({
   port = Number(process.env.PORT || 4317),
   host = "0.0.0.0",
@@ -18,7 +19,16 @@ async function startServer({
     );
   } catch {}
   const timer = new Timer({ saved });
-  const token = crypto.randomBytes(24).toString("hex");
+  const tokenFile = path.join(dataDir, "pairing-key");
+  let token;
+  try {
+    token = fs.readFileSync(tokenFile, "utf8");
+    if (!/^[a-f0-9]{48}$/.test(token)) throw new Error("Invalid key");
+  } catch {
+    token = crypto.randomBytes(24).toString("hex");
+    fs.writeFileSync(tokenFile, token, { mode: 0o600 });
+  }
+  const remote = new RemoteBridge({ timer, dataDir });
   const persist = () => {
     const file = path.join(dataDir, "state.json");
     fs.writeFileSync(file + ".tmp", JSON.stringify(timer.preferences()), {
@@ -62,6 +72,23 @@ async function startServer({
         if (req.method === "GET" && url.pathname === "/api/state")
           return json(200, timer.snapshot());
         if (req.method === "GET" && url.pathname === "/api/pair") {
+          const internet = remote.pairing();
+          if (internet)
+            return json(200, {
+              ...internet,
+              addresses: [],
+              selected: "",
+              qr: await QRCode.toDataURL(internet.link, {
+                width: 240,
+                margin: 2,
+                errorCorrectionLevel: "M",
+              }),
+            });
+          if (remote.status().configured)
+            return json(503, {
+              error:
+                "Connecting to internet pairing. Please wait; check the Render URL and connection key.",
+            });
           const port = server.address().port;
           const addresses = ips();
           const selected = url.searchParams.get("ip") || addresses[0];
@@ -134,10 +161,12 @@ async function startServer({
   return {
     server,
     timer,
+    remote,
     token,
     url: `http://127.0.0.1:${server.address().port}/#token=${token}`,
     close: () => {
       clearInterval(interval);
+      remote.close();
       persist();
       return new Promise((resolve) => server.close(resolve));
     },

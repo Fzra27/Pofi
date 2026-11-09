@@ -2,20 +2,28 @@ const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.hash.slice(1));
 let token = params.get("token");
 try {
-  if (token) sessionStorage.setItem("pofi-token", token);
-  else token = sessionStorage.getItem("pofi-token");
+  if (token) localStorage.setItem("pofi-token", token);
+  else
+    token =
+      localStorage.getItem("pofi-token") ||
+      sessionStorage.getItem("pofi-token");
 } catch {}
 let storedPhone = false;
 try {
-  storedPhone = sessionStorage.getItem("pofi-phone") === "1";
+  storedPhone = localStorage.getItem("pofi-phone") === "1";
 } catch {}
 const phone = params.get("phone") === "1" || storedPhone;
 if (phone) {
   document.body.classList.add("phone-view");
   try {
-    sessionStorage.setItem("pofi-phone", "1");
+    localStorage.setItem("pofi-phone", "1");
   } catch {}
 }
+let internetPairing = params.get("remote") === "1";
+try {
+  if (internetPairing) localStorage.setItem("pofi-remote", "1");
+  else internetPairing = localStorage.getItem("pofi-remote") === "1";
+} catch {}
 if (location.hash) history.replaceState(null, "", location.pathname);
 let state = null,
   observedAt = 0,
@@ -100,6 +108,7 @@ async function api(route, body) {
   return result;
 }
 function receive(next) {
+  if (next.sessionId && state?.sessionId !== next.sessionId) lastEvent = null;
   if (lastEvent === null) lastEvent = next.eventId;
   else alertEvent(next.lastEvent);
   state = next;
@@ -113,9 +122,11 @@ async function sync() {
     receive(await api("/api/state"));
   } catch (e) {
     connected = false;
-    $("connection").textContent = token
-      ? "Connection lost. Keep Ubuntu awake and reconnect to the same Wi-Fi."
-      : e.message;
+    $("connection").textContent = internetPairing
+      ? e.message
+      : token
+        ? "Connection lost. Open Pofi on Ubuntu and check the local network."
+        : e.message;
     render();
   }
 }
@@ -299,6 +310,11 @@ async function pair(ip) {
     const info = await api(
       "/api/pair" + (ip ? "?ip=" + encodeURIComponent(ip) : ""),
     );
+    $("network").hidden = !!info.remote;
+    $("network-label").hidden = !!info.remote;
+    $("pair-help").textContent = info.remote
+      ? "Internet pairing: this link stays the same across app restarts. Mobile data or any Wi-Fi works. Keep Pofi open on Ubuntu."
+      : "Local pairing: use the same Wi-Fi. The key stays the same, but your computer’s IP can change.";
     $("network").replaceChildren(
       ...info.addresses.map(
         (address) =>
@@ -315,11 +331,15 @@ async function pair(ip) {
     $("pair-link").textContent =
       info.link.split("/#")[0] + " · private pairing link";
   } catch (e) {
+    $("pair-qr").removeAttribute("src");
+    $("pair-link").removeAttribute("href");
+    $("pair-link").textContent = "";
     $("pair-error").textContent = e.message;
   }
 }
-$("phone-button").onclick = () => {
+$("phone-button").onclick = async () => {
   $("pair-dialog").showModal();
+  if (window.pofiDesktop?.remoteStatus) await remoteStatus();
   pair();
 };
 $("close-pair").onclick = () => $("pair-dialog").close();
@@ -382,4 +402,53 @@ if (window.pofiDesktop?.checkUpdate) {
       updateButton.disabled = false;
     }
   };
+}
+
+let remoteWasConnected = false;
+async function remoteStatus() {
+  try {
+    const status = await window.pofiDesktop.remoteStatus();
+    if (document.activeElement !== $("relay-url"))
+      $("relay-url").value = status.origin;
+    $("relay-status").textContent = status.configured
+      ? status.connected
+        ? "Connected. Your phone can use any network."
+        : status.error || "Connecting…"
+      : "Not configured. Local Wi-Fi pairing is available.";
+    if (status.connected && !remoteWasConnected) pair();
+    remoteWasConnected = status.connected;
+    return status;
+  } catch (e) {
+    $("relay-status").textContent = e.message;
+  }
+}
+if (window.pofiDesktop?.remoteStatus) {
+  $("internet-settings").hidden = false;
+  $("relay-setup").onclick = () => window.pofiDesktop.openRelaySetup();
+  $("relay-save").onclick = async () => {
+    try {
+      await window.pofiDesktop.saveRemote({
+        origin: $("relay-url").value.trim(),
+        key: $("relay-key").value.trim(),
+      });
+      $("relay-key").value = "";
+      remoteWasConnected = false;
+      await remoteStatus();
+      await pair();
+    } catch (e) {
+      $("relay-status").textContent = e.message;
+    }
+  };
+  $("relay-disable").onclick = async () => {
+    try {
+      await window.pofiDesktop.disableRemote();
+      await remoteStatus();
+      pair();
+    } catch (e) {
+      $("relay-status").textContent = e.message;
+    }
+  };
+  setInterval(() => {
+    if ($("pair-dialog").open) remoteStatus();
+  }, 2000);
 }

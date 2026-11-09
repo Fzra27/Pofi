@@ -331,11 +331,11 @@
       </button>
       <p class="eyebrow">TAKE POFI WITH YOU</p>
       <h2>A little walk.<br />Same little timer.</h2>
-      <p>
+      <p id="pair-help">
         Scan with your iPhone camera. Stay on the same Wi-Fi as your Ubuntu
         computer.
       </p>
-      <label for="network">Computer’s network address</label
+      <label id="network-label" for="network">Computer’s network address</label
       ><select id="network"></select
       ><img
         id="pair-qr"
@@ -347,6 +347,38 @@
         Keep Pofi running on Ubuntu and Safari open on your iPhone for the
         return chime. A locked iPhone can silence web alerts.
       </p>
+      <fieldset id="internet-settings" hidden>
+        <legend>Internet pairing</legend>
+        <p>
+          Connect from any Wi-Fi or mobile data. Set up your private Render
+          relay once.
+        </p>
+        <button id="relay-setup" type="button">Set up on Render</button
+        ><label for="relay-url">Render service URL</label
+        ><input
+          id="relay-url"
+          type="url"
+          placeholder="https://pofi-relay.onrender.com"
+          autocomplete="off"
+        /><label for="relay-key">Render POFI_RELAY_KEY</label
+        ><input
+          id="relay-key"
+          type="password"
+          autocomplete="off"
+          placeholder="Paste from Render Environment settings"
+        />
+        <div>
+          <button id="relay-save" type="button">Save connection</button
+          ><button id="relay-disable" type="button">
+            Use local Wi-Fi only
+          </button>
+        </div>
+        <p id="relay-status" role="status"></p>
+        <small
+          >Your connection key stays on this computer. Never paste it in
+          chat.</small
+        >
+      </fieldset>
       <p id="pair-error" role="status"></p>
     </dialog>
     <div class="connection" id="connection" role="status">

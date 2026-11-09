@@ -115,6 +115,24 @@ else {
       const trusted = (event) =>
         event.sender === win.webContents &&
         event.senderFrame === win.webContents.mainFrame;
+      ipcMain.handle("pofi-remote-status", (event) => {
+        if (!trusted(event)) throw new Error("Not allowed");
+        return service.remote.status();
+      });
+      ipcMain.handle("pofi-remote-save", (event, config) => {
+        if (!trusted(event)) throw new Error("Not allowed");
+        return service.remote.configure(config);
+      });
+      ipcMain.handle("pofi-remote-disable", (event) => {
+        if (!trusted(event)) throw new Error("Not allowed");
+        return service.remote.disable();
+      });
+      ipcMain.handle("pofi-remote-setup", (event) => {
+        if (!trusted(event)) throw new Error("Not allowed");
+        return require("electron").shell.openExternal(
+          "https://render.com/deploy?repo=https://github.com/Fzra27/Pofi",
+        );
+      });
       ipcMain.handle("pofi-update-check", async (event) => {
         if (!trusted(event)) throw new Error("Not allowed");
         return updater.check();

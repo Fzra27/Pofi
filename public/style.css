@@ -910,3 +910,53 @@ footer {
     max-width: none;
   }
 }
+#internet-settings {
+  border: 1px solid #dce1d1;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 20px 0 0;
+  text-align: left;
+}
+#internet-settings[hidden] {
+  display: none;
+}
+#internet-settings legend {
+  font-size: 12px;
+  color: #405e43;
+}
+#internet-settings input {
+  display: block;
+  width: 100%;
+  padding: 11px;
+  border: 1px solid #d8dece;
+  border-radius: 7px;
+  margin-bottom: 12px;
+  background: #f5f3eb;
+  color: #405e43;
+  font-size: 12px;
+}
+#internet-settings button {
+  padding: 9px 11px;
+  border: 1px solid #cbd5c0;
+  border-radius: 7px;
+  color: #405e43;
+  background: #edf0e2;
+  font-size: 11px;
+  margin: 0 5px 12px 0;
+}
+#internet-settings small {
+  font-size: 9px;
+  line-height: 1.6;
+  color: #8b907f;
+}
+#relay-status {
+  overflow-wrap: anywhere;
+}
+#pair-dialog {
+  max-height: 90vh;
+  overflow: auto;
+}
+#network[hidden],
+#network-label[hidden] {
+  display: none;
+}
