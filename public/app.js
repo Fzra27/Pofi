@@ -1,30 +1,51 @@
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.hash.slice(1));
 let token = params.get("token");
-try {
-  if (token) localStorage.setItem("pofi-token", token);
-  else
-    token =
-      localStorage.getItem("pofi-token") ||
-      sessionStorage.getItem("pofi-token");
-} catch {}
-let storedPhone = false;
-try {
-  storedPhone = localStorage.getItem("pofi-phone") === "1";
-} catch {}
-const phone = params.get("phone") === "1" || storedPhone;
-if (phone) {
-  document.body.classList.add("phone-view");
-  try {
-    localStorage.setItem("pofi-phone", "1");
-  } catch {}
+// Storage can be unavailable in private/embedded Safari. Try each store independently.
+function stored(name) {
+  for (const kind of ["localStorage", "sessionStorage"]) {
+    try {
+      const value = window[kind].getItem(name);
+      if (value) return value;
+    } catch {}
+  }
+  return null;
 }
-let internetPairing = params.get("remote") === "1";
-try {
-  if (internetPairing) localStorage.setItem("pofi-remote", "1");
-  else internetPairing = localStorage.getItem("pofi-remote") === "1";
-} catch {}
-if (location.hash) history.replaceState(null, "", location.pathname);
+function remember(name, value) {
+  for (const kind of ["localStorage", "sessionStorage"]) {
+    try {
+      window[kind].setItem(name, value);
+    } catch {}
+  }
+}
+if (token) remember("pofi-token", token);
+else token = stored("pofi-token");
+let phone = params.get("phone") === "1" || stored("pofi-phone") === "1";
+let internetPairing =
+  params.get("remote") === "1" || stored("pofi-remote") === "1";
+function phoneMode() {
+  phone = true;
+  document.body.classList.add("phone-view");
+  remember("pofi-phone", "1");
+  if (internetPairing) remember("pofi-remote", "1");
+}
+if (phone) {
+  phoneMode();
+  // A private bookmark must retain its pairing fragment, even without storage.
+  if (token) {
+    const hash = new URLSearchParams({
+      token,
+      phone: "1",
+      ...(internetPairing ? { remote: "1" } : {}),
+    });
+    history.replaceState(
+      null,
+      "",
+      location.pathname + location.search + "#" + hash.toString(),
+    );
+  }
+} else if (location.hash)
+  history.replaceState(null, "", location.pathname + location.search);
 let state = null,
   observedAt = 0,
   lastEvent = null,
@@ -99,12 +120,25 @@ async function api(route, body) {
     method: body ? "POST" : "GET",
     headers: {
       "X-Pofi-Token": token || "",
+      "X-Pofi-Device": phone ? "phone" : "desktop",
       ...(body ? { "Content-Type": "application/json" } : {}),
     },
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
+  if (response.headers.get("X-Pofi-Pairing") === "phone") {
+    internetPairing = response.headers.get("X-Pofi-Network") === "internet";
+    phoneMode();
+  }
   const result = await response.json();
-  if (!response.ok) throw new Error(result.error || "Unable to connect.");
+  if (!response.ok) {
+    const error = new Error(
+      response.status === 401
+        ? "Pairing is missing or expired. Open your saved private pairing link, or scan the current QR in Pofi once."
+        : result.error || "Unable to connect.",
+    );
+    error.status = response.status;
+    throw error;
+  }
   return result;
 }
 function receive(next) {

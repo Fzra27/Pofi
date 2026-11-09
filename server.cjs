@@ -6,6 +6,7 @@ const http = require("node:http"),
 const QRCode = require("qrcode");
 const { Timer } = require("./timer.cjs");
 const { RemoteBridge } = require("./remote.cjs");
+const { authenticatePhone } = require("./pairing.cjs");
 async function startServer({
   port = Number(process.env.PORT || 4317),
   host = "0.0.0.0",
@@ -60,12 +61,7 @@ async function startServer({
     };
     try {
       if (url.pathname.startsWith("/api/")) {
-        const got = Buffer.from(req.headers["x-pofi-token"] || "");
-        const expected = Buffer.from(token);
-        if (
-          got.length !== expected.length ||
-          !crypto.timingSafeEqual(got, expected)
-        )
+        if (!authenticatePhone(req, res, token))
           return json(401, {
             error: "Pair using the QR code in Pofi on your computer.",
           });

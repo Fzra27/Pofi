@@ -1,6 +1,6 @@
 {
   "name": "pofi",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "A little focus. A little movement. Your potato companion for Ubuntu and iPhone.",
   "main": "desktop/main.cjs",
   "author": "Pofi contributors",
@@ -31,7 +31,8 @@
       "timer.cjs",
       "package.json",
       "static.cjs",
-      "remote.cjs"
+      "remote.cjs",
+      "pairing.cjs"
     ],
     "linux": {
       "target": [

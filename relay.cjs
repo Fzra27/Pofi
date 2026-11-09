@@ -2,6 +2,7 @@
 const http = require("node:http"),
   crypto = require("node:crypto");
 const { headers, serveStatic } = require("./static.cjs");
+const { authenticatePhone } = require("./pairing.cjs");
 const equal = (a, b) => {
   a = Buffer.from(typeof a === "string" ? a : "");
   b = Buffer.from(b);
@@ -88,7 +89,7 @@ async function startRelay({
         });
       }
       if (url.pathname.startsWith("/api/")) {
-        if (!equal(req.headers["x-pofi-token"], phoneKey))
+        if (!authenticatePhone(req, res, phoneKey, { internet: true }))
           return json(res, 401, {
             error: "Scan the internet pairing QR in Pofi.",
           });

@@ -4,10 +4,10 @@ A little focus. A little movement. An English-language focus companion for **Ubu
 
 ## Ubuntu: install the desktop app
 
-Download `pofi_1.3.0_amd64.deb` (64-bit Intel/AMD Ubuntu 22.04 or newer) and install:
+Download `pofi_1.3.1_amd64.deb` (64-bit Intel/AMD Ubuntu 22.04 or newer) and install:
 
 ```sh
-sudo apt install ./pofi_1.3.0_amd64.deb
+sudo apt install ./pofi_1.3.1_amd64.deb
 ```
 
 Open **Pofi** from Applications. It includes its runtime: no Node.js installation is needed for the `.deb`. Focus and break completion use Ubuntu's native notification service and an audible chime. Allow Pofi notifications and sound in Ubuntu Settings; Do Not Disturb may suppress banners. Closing the window or choosing **Quit Pofi** ends the app and clears session statistics. Minimize the window to keep the session running. The computer must remain awake. Phone pairing uses port **4317**.
@@ -43,7 +43,7 @@ git pull --ff-only
 npm ci
 npm test
 npm run build:linux
-sudo apt install ./dist/pofi_1.3.0_amd64.deb
+sudo apt install ./dist/pofi_1.3.1_amd64.deb
 ```
 
 ## iPhone: stable pairing from any network (1.3+)
@@ -56,7 +56,7 @@ Deploy your own private relay using the repository's **Render Blueprint**:
 2. Wait for the service to show **Live**. Copy its public `https://…onrender.com` URL. In the service's **Environment** settings reveal/copy `POFI_RELAY_KEY`. Do not paste the key in chat or GitHub.
 3. Update/reopen Pofi on Ubuntu. Open **Pair iPhone → Internet pairing**. Paste the Render URL and key, then **Save connection**. Wait for **Connected**. The **Set up on Render** button opens the same deployment page.
 4. Scan the new **internet** QR once with your iPhone camera. Open in Safari and tap **Enable this phone’s return chime**. The phone may use mobile data or any Wi-Fi; the desktop makes outbound HTTPS requests, so no router port forwarding is needed.
-5. Keep the same Safari page or bookmark it. Pairing is stored in the site's local storage. The link/key stay stable across Pofi/relay restarts and computer IP changes, as long as the Render address and POFI_RELAY_KEY stay unchanged. Clearing Safari site data, rotating the Render key or recreating the service with a different address requires pairing again. If desktop app data is removed, re-enter the same Render URL/key to reconnect the existing phone link. Old LAN QR links do not become internet links; scan the internet QR once after enabling it.
+5. Keep the same Safari page or bookmark it. Pairing is stored in local/session storage and a first-party HttpOnly cookie. Phone URLs retain their private pairing fragment so a bookmark works even in a fresh/private browser context. Keep this private link to yourself. The desktop URL still removes its key from the address bar. The link/key stay stable across Pofi/relay restarts and computer IP changes, as long as the Render address and POFI_RELAY_KEY stay unchanged. After clearing Safari site data, reopen the full private pairing bookmark or scan the QR again. Rotating the Render key or recreating the service with a different address requires pairing again. If desktop app data is removed, re-enter the same Render URL/key to reconnect the existing phone link. Old LAN QR links do not become internet links; scan the internet QR once after enabling it.
 
 The desktop must remain awake with Pofi running and Internet available. The relay forwards commands and current timer state; the desktop owns the timer. If disconnected, Safari shows **computer offline** and reconnects automatically when Pofi returns. Closing Pofi clears session statistics as before; the saved connection remains. One Ubuntu installation should use each private relay. The key is stored in a mode-0600 desktop config file; only its derived phone key appears in the QR. Anyone with the phone link can control this timer. The relay operator can see timer state, including the session log; use your own private service. Changing the Render key invalidates old phone links; update the key in Ubuntu and pair again.
 
@@ -81,8 +81,12 @@ npm run desktop
 npm run build:linux
 ```
 
-`postinstall` downloads the pinned official Electron binary with checksum verification. Behind a proxy, Node 24 can use inherited proxy settings with `NODE_USE_ENV_PROXY=1 npm ci`; keep your normal CA trust settings. `npm run build:linux` creates `dist/pofi_1.3.0_amd64.deb` without publishing. For web-only development, `npm start` prints a private local pairing URL. Use that URL, not a static file server; the Node process owns the synchronized timer. `PORT` and `POFI_DATA_DIR` are optional server overrides. Desktop state lives in Electron's per-user application data directory.
+`postinstall` downloads the pinned official Electron binary with checksum verification. Behind a proxy, Node 24 can use inherited proxy settings with `NODE_USE_ENV_PROXY=1 npm ci`; keep your normal CA trust settings. `npm run build:linux` creates `dist/pofi_1.3.1_amd64.deb` without publishing. For web-only development, `npm start` prints a private local pairing URL. Use that URL, not a static file server; the Node process owns the synchronized timer. `PORT` and `POFI_DATA_DIR` are optional server overrides. Desktop state lives in Electron's per-user application data directory.
 
 ## Validation
 
 `npm test` covers early walking before focus expires, full/default and custom walking durations, automatic focus restart, late tick accounting, focus overtime, exactly-once alerts, pauses, session counts/logs, preferences-only persistence, paired-device access, stable local/internet pairing, relay authentication, host offline/reconnect and relay/desktop restarts, update version ordering and update failures that prevent privileged installation. Desktop and phone browser flows are checked with Chromium emulation; native notifications were exercised over a test D-Bus service. A real physical iPhone and the user's Ubuntu password dialog still require device-side confirmation. The local HTTP iOS foreground limitation remains unchanged.
+
+### Recover pairing after upgrading from 1.3.0
+
+If an old saved address says “Scan the internet pairing QR”, scan the current internet QR in Pofi once after installing 1.3.1 (and deploying the relay update). Bookmark the **full private phone URL**, including `#token=…`; do not share it. The 1.3.0 client stripped that fragment, so a previously saved bare address cannot recover a missing credential in a fresh Safari context. The fixed client also restores phone mode from its first-party cookie when reopening the bare origin in the same browser. Neither mechanism bypasses authentication when all credentials are gone.
