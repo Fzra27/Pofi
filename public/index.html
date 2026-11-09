@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Pofi — A little focus. A little movement.</title>
+    <meta name="theme-color" content="#405e43" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <link rel="apple-touch-icon" href="icon.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <a class="brand" href="./"
+          ><span class="brand-icon">✳</span> pofi<span class="brand-dot"
+            >.</span
+          ></a
+        ><span class="tagline">Stay rooted in life. Not your chair.</span
+        ><button id="sound" class="icon-button" aria-pressed="true">
+          ♪ <span>Sound on</span></button
+        ><button id="phone-button" class="icon-button">Pair iPhone</button>
+      </header>
+      <main>
+        <div class="intro">
+          <div>
+            <p class="eyebrow">SMALL STEPS. GOOD DAYS.</p>
+            <h1>A little focus.<br />A little <em>movement.</em></h1>
+            <p class="subtitle">
+              Get into your work. Remember yourself. Pofi will remind you.
+            </p>
+          </div>
+          <div class="today">
+            <span class="sun">☀</span>
+            <div>
+              <span id="date"></span
+              ><strong>Make a little room for yourself.</strong>
+            </div>
+          </div>
+        </div>
+        <section class="workspace">
+          <article class="timer-card">
+            <div class="card-top">
+              <span class="live"
+                ><i></i> <span id="mode-label">FOCUS TIME</span></span
+              ><span id="session">Round 1</span>
+            </div>
+            <div class="speech" id="speech">
+              You bring the focus. I’ll keep the time.<span
+                >One small thing at a time.</span
+              >
+            </div>
+            <div class="mascot-scene">
+              <div class="halo"></div>
+              <svg
+                class="potato"
+                viewBox="0 0 320 290"
+                role="img"
+                aria-label="Your animated potato companion"
+              >
+                <defs>
+                  <linearGradient id="skin" x2=".8" y2="1">
+                    <stop stop-color="#efca85" />
+                    <stop offset="1" stop-color="#cc974e" />
+                  </linearGradient>
+                </defs>
+                <ellipse
+                  cx="160"
+                  cy="267"
+                  rx="92"
+                  ry="10"
+                  fill="#b7a880"
+                  opacity=".2"
+                />
+                <g class="left-leg">
+                  <path
+                    d="M125 220l-16 31"
+                    stroke="#735431"
+                    stroke-width="11"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    d="M109 245q-18-3-22 13q17 13 42 1l-5-13"
+                    fill="#455746"
+                    stroke="#344536"
+                    stroke-width="3"
+                  />
+                  <path
+                    d="M89 260q18 8 40-1"
+                    stroke="#fff8e8"
+                    stroke-width="6"
+                  />
+                </g>
+                <g class="right-leg">
+                  <path
+                    d="M196 220l16 31"
+                    stroke="#735431"
+                    stroke-width="11"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    d="M211 245q18-3 22 13q-17 13-42 1l5-13"
+                    fill="#455746"
+                    stroke="#344536"
+                    stroke-width="3"
+                  />
+                  <path
+                    d="M231 260q-18 8-40-1"
+                    stroke="#fff8e8"
+                    stroke-width="6"
+                  />
+                </g>
+                <g class="body">
+                  <path
+                    d="M87 158Q65 178 69 205"
+                    fill="none"
+                    stroke="#916633"
+                    stroke-width="12"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    d="M235 157q25 22 17 46"
+                    fill="none"
+                    stroke="#916633"
+                    stroke-width="12"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    d="M98 66C116 22 191 20 220 67C239 100 244 148 237 189C230 237 184 245 134 235C79 228 74 187 80 151C85 117 81 98 98 66Z"
+                    fill="url(#skin)"
+                    stroke="#8c673c"
+                    stroke-width="3"
+                  />
+                  <g fill="#af7c3a" opacity=".55">
+                    <ellipse
+                      cx="129"
+                      cy="66"
+                      rx="9"
+                      ry="5"
+                      transform="rotate(-30 129 66)"
+                    />
+                    <ellipse
+                      cx="185"
+                      cy="61"
+                      rx="6"
+                      ry="9"
+                      transform="rotate(-30 185 61)"
+                    />
+                    <ellipse cx="211" cy="97" rx="7" ry="4" />
+                    <ellipse cx="104" cy="103" rx="4" ry="7" />
+                    <ellipse cx="157" cy="91" rx="4" ry="3" />
+                    <ellipse cx="104" cy="194" rx="5" ry="8" />
+                    <ellipse cx="205" cy="207" rx="8" ry="5" />
+                    <ellipse cx="155" cy="218" rx="7" ry="4" />
+                    <ellipse cx="224" cy="164" rx="4" ry="7" />
+                  </g>
+                  <g class="eyes">
+                    <ellipse cx="121" cy="137" rx="19" ry="23" fill="#fff9e9" />
+                    <ellipse cx="194" cy="137" rx="19" ry="23" fill="#fff9e9" />
+                    <ellipse cx="124" cy="140" rx="12" ry="16" fill="#34332a" />
+                    <ellipse cx="191" cy="140" rx="12" ry="16" fill="#34332a" />
+                    <circle cx="127" cy="134" r="5" fill="white" />
+                    <circle cx="194" cy="134" r="5" fill="white" />
+                  </g>
+                  <g fill="#e3987c" opacity=".75">
+                    <ellipse cx="107" cy="165" rx="13" ry="7" />
+                    <ellipse cx="208" cy="165" rx="13" ry="7" />
+                  </g>
+                  <path
+                    class="mouth"
+                    d="M146 166q13 18 26 0"
+                    fill="#9f5542"
+                    stroke="#674630"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                  />
+                  <g class="rot" fill="#677448">
+                    <ellipse cx="140" cy="77" rx="18" ry="12" />
+                    <ellipse cx="213" cy="183" rx="15" ry="20" />
+                    <ellipse cx="111" cy="213" rx="15" ry="9" />
+                  </g>
+                </g></svg
+              ><span class="spark spark-one">✧</span
+              ><span class="spark spark-two">✦</span
+              ><span class="mascot-caption" id="mascot-caption"
+                >Happy potato. Happy you.</span
+              >
+            </div>
+            <fieldset class="duration-settings">
+              <legend>Make it your rhythm</legend>
+              <label for="focus-duration"
+                >Focus <output id="focus-value">45 min</output></label
+              ><input
+                id="focus-duration"
+                type="range"
+                min="1"
+                max="120"
+                step="1"
+                value="45"
+              />
+              <div class="presets">
+                <button data-focus="25">25 min</button
+                ><button data-focus="45">45 min</button
+                ><button data-focus="60">60 min</button>
+              </div>
+              <label for="break-duration"
+                >Walk <output id="break-value">5 min</output></label
+              ><input
+                id="break-duration"
+                type="range"
+                min="1"
+                max="30"
+                step="1"
+                value="5"
+              /><small id="settings-hint"
+                >Choose your minutes before you start.</small
+              >
+            </fieldset>
+            <div
+              class="timer"
+              id="timer"
+              role="timer"
+              aria-label="Time remaining"
+            >
+              45<span>:</span>00
+            </div>
+            <div class="progress-track"><div id="progress"></div></div>
+            <p class="timer-note" id="timer-note">
+              45 minutes of focus. 5 minutes on your feet.
+            </p>
+            <div class="phone-audio">
+              <button id="enable-phone-audio">
+                Enable this phone’s return chime ♪
+              </button>
+              <p>Keep Safari open and your screen awake during the walk.</p>
+            </div>
+            <div class="controls">
+              <button id="reset" class="reset" aria-label="Reset timer">
+                ↺</button
+              ><button id="toggle" class="primary">
+                Start focusing <span>↗</span></button
+              ><button id="skip" class="reset" aria-label="Skip to next phase">
+                ⇥
+              </button>
+            </div>
+            <p class="keyboard">
+              Take a breath. Start when you’re ready. <kbd>SPACE</kbd>
+            </p>
+          </article>
+          <aside>
+            <section class="plan-card">
+              <p class="eyebrow">YOUR NATURAL RHYTHM</p>
+              <h2>Sit. Focus.<br />Walk. Refresh.</h2>
+              <div class="step">
+                <span class="step-icon">✳</span>
+                <div>
+                  <strong id="focus-plan">45 min deep focus</strong>
+                  <p>Pick one thing. Take a small step.</p>
+                </div>
+                <span class="step-number">01</span>
+              </div>
+              <div class="step">
+                <span class="step-icon walk-icon">↗</span>
+                <div>
+                  <strong id="break-plan">5 min walking break</strong>
+                  <p>Stand up. Take a little wander.</p>
+                </div>
+                <span class="step-number">02</span>
+              </div>
+              <div class="tip">
+                A glass of water wouldn’t hurt. <span>☕</span>
+              </div>
+            </section>
+            <section class="health-card">
+              <div class="health-heading">
+                <span class="small-potato">●</span
+                ><strong>How’s your potato?</strong
+                ><span id="health">Feeling fresh</span>
+              </div>
+              <div class="health-bars"><i></i><i></i><i></i><i></i><i></i></div>
+              <p id="health-note">
+                Too much sitting makes Pofi wilt.<br />A little walking brings
+                the sparkle back.
+              </p>
+            </section>
+            <section class="stats">
+              <div>
+                <strong id="completed">0</strong><span>rounds completed</span>
+              </div>
+              <div>
+                <strong id="minutes">0 <small>min</small></strong
+                ><span>focused today</span>
+              </div>
+            </section>
+            <p class="aside-note">
+              Less about doing more.<br /><em>More about feeling better.</em>
+            </p>
+          </aside>
+        </section>
+      </main>
+      <footer>
+        <span>Small as a potato. Good as a little walk.</span
+        ><span
+          ><span id="rhythm">45 / 5</span> &nbsp; · &nbsp; YOUR NATURAL
+          RHYTHM</span
+        >
+      </footer>
+    </div>
+    <dialog id="pair-dialog">
+      <button id="close-pair" class="close-dialog" aria-label="Close pairing">
+        ×
+      </button>
+      <p class="eyebrow">TAKE POFI WITH YOU</p>
+      <h2>A little walk.<br />Same little timer.</h2>
+      <p>
+        Scan with your iPhone camera. Stay on the same Wi-Fi as your Ubuntu
+        computer.
+      </p>
+      <label for="network">Computer’s network address</label
+      ><select id="network"></select
+      ><img
+        id="pair-qr"
+        width="240"
+        height="240"
+        alt="Scan to open your Pofi timer on iPhone"
+      /><a id="pair-link" target="_blank" rel="noreferrer"></a>
+      <p class="pair-note">
+        Keep Pofi running on Ubuntu and Safari open on your iPhone for the
+        return chime. A locked iPhone can silence web alerts.
+      </p>
+      <p id="pair-error" role="status"></p>
+    </dialog>
+    <div class="connection" id="connection" role="status">
+      Connecting to Pofi…
+    </div>
+    <div id="toast" role="status"></div>
+    <script src="app.js"></script>
+  </body>
+</html>

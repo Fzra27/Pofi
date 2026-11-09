@@ -1,0 +1,9 @@
+{
+  "name": "Pofi — Focus & Walk",
+  "short_name": "Pofi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f3eb",
+  "theme_color": "#405e43",
+  "icons": [{ "src": "/icon.png", "sizes": "512x512", "type": "image/png" }]
+}

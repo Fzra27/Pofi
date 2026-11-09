@@ -1,0 +1,20 @@
+name: Check and package Pofi
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build:linux
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pofi-ubuntu-amd64
+          path: dist/*.deb

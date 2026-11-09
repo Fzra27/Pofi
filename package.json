@@ -1,0 +1,60 @@
+{
+  "name": "pofi",
+  "version": "1.0.0",
+  "description": "A little focus. A little movement. Your potato companion for Ubuntu and iPhone.",
+  "main": "desktop/main.cjs",
+  "author": "Pofi contributors",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "node server.cjs",
+    "desktop": "electron .",
+    "test": "node --test test/*.test.cjs",
+    "build:linux": "electron-builder --linux deb --publish never",
+    "postinstall": "install-electron"
+  },
+  "dependencies": {
+    "qrcode": "1.5.4"
+  },
+  "devDependencies": {
+    "electron": "45.2.3",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "app.pofi.desktop",
+    "productName": "Pofi",
+    "files": [
+      "public/**/*",
+      "desktop/**/*",
+      "server.cjs",
+      "timer.cjs",
+      "package.json"
+    ],
+    "linux": {
+      "target": [
+        "deb"
+      ],
+      "category": "Utility",
+      "icon": "public/icon.png",
+      "maintainer": "Pofi contributors <pofi@example.com>",
+      "syncDesktopName": true
+    },
+    "deb": {
+      "depends": [
+        "libgtk-3-0",
+        "libnotify4",
+        "libnss3",
+        "libxss1",
+        "libxtst6",
+        "xdg-utils",
+        "libatspi2.0-0",
+        "libuuid1",
+        "libsecret-1-0"
+      ]
+    }
+  },
+  "desktopName": "pofi.desktop",
+  "engines": {
+    "node": ">=24"
+  }
+}
