@@ -1,0 +1,77 @@
+name: Publish Ubuntu release
+on:
+  push:
+    tags:
+      - "v*"
+permissions:
+  contents: write
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Verify tag matches package version
+        run: |
+          node -e 'const v=require("./package.json").version;if(process.env.GITHUB_REF_NAME!=="v"+v)throw new Error("Tag does not match package version")'
+      - run: npm ci
+      - run: npm test
+      - run: npm run build:linux
+      - name: Prepare release notes and checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(node -p 'require("./package.json").version')
+          cd dist
+          sha256sum "pofi_${version}_amd64.deb" > SHA256SUMS
+          cd ..
+          cat > "$RUNNER_TEMP/release-notes.md" <<'NOTES'
+          Pofi is a focus and walking companion for Ubuntu, with an optional iPhone companion.
+
+          ### Download and install
+          Download **pofi_1.3.1_amd64.deb** from Assets below. It includes its runtime; Node.js is not required to run the desktop app.
+
+          On Ubuntu 22.04 or newer (Intel/AMD 64-bit), open a terminal in the download folder:
+          ```sh
+          sudo apt install ./pofi_1.3.1_amd64.deb
+          ```
+          Open **Pofi** from Applications. Verify the download with `sha256sum -c SHA256SUMS` if desired.
+
+          ### Features
+          - Adjustable focus and walk durations (default 45 / 5 minutes).
+          - Early walking and early return to focus; automatic focus restart after the walk.
+          - Focus overtime, session totals and a session log that clears on quit.
+          - Audible reminders and native Ubuntu notifications.
+          - QR-paired iPhone companion over local Wi-Fi or your own private Render relay.
+          - Stable private phone bookmarks and first-party pairing cookies.
+          - Source-based in-app updates (Git, Node.js 24+, npm and PolicyKit are required for that optional feature).
+
+          Internet pairing requires a separate relay deployment. Each friend should use their own relay/key, rather than sharing another person's timer. On iPhone keep Pofi foregrounded with the screen awake for sound; locked-screen push is not implemented.
+
+          This release is for **Ubuntu amd64**. It is not a Windows, macOS or App Store installer.
+          NOTES
+      - name: Upload assets and publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(node -p 'require("./package.json").version')
+          if draft=$(gh release view "$TAG" --json isDraft --jq '.isDraft' 2>/dev/null); then
+            if [ "$draft" != "true" ]; then
+              echo 'This release is already published; refusing to replace its assets.'
+              exit 1
+            fi
+          else
+            gh release create "$TAG" --verify-tag --draft --title "Pofi $version" --notes-file "$RUNNER_TEMP/release-notes.md"
+          fi
+          gh release upload "$TAG" "dist/pofi_${version}_amd64.deb" dist/SHA256SUMS --clobber
+          gh release edit "$TAG" --draft=false --latest
