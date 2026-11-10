@@ -96,7 +96,7 @@ async function startRelay({
         if (!online())
           return json(res, 503, {
             error:
-              "Your computer is offline. Open Pofi on Ubuntu to reconnect.",
+              "Your computer is offline. Open Pofi on your computer to reconnect.",
           });
         if (req.method === "GET" && url.pathname === "/api/state")
           return json(res, 200, state);

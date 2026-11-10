@@ -11,10 +11,16 @@ jobs:
         with:
           node-version: "24"
           cache: npm
+      - run: sudo apt-get update && sudo apt-get install -y libarchive-tools zstd xvfb x11-utils xauth dbus-x11
       - run: npm ci
       - run: npm test
-      - run: npm run build:linux
+      - run: npm run build:all
+      - name: Smoke test AppImage without requiring FUSE
+        run: bash scripts/smoke-appimage.sh dist/*.AppImage
       - uses: actions/upload-artifact@v4
         with:
-          name: pofi-ubuntu-amd64
-          path: dist/*.deb
+          name: pofi-linux-x86_64
+          path: |
+            dist/*.deb
+            dist/*.pkg.tar.zst
+            dist/*.AppImage

@@ -159,7 +159,7 @@ async function sync() {
     $("connection").textContent = internetPairing
       ? e.message
       : token
-        ? "Connection lost. Open Pofi on Ubuntu and check the local network."
+        ? "Connection lost. Open Pofi on your computer and check the local network."
         : e.message;
     render();
   }

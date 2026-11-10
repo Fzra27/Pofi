@@ -1,4 +1,4 @@
-name: Publish Ubuntu release
+name: Publish Linux release
 on:
   push:
     tags:
@@ -20,42 +20,54 @@ jobs:
       - name: Verify tag matches package version
         run: |
           node -e 'const v=require("./package.json").version;if(process.env.GITHUB_REF_NAME!=="v"+v)throw new Error("Tag does not match package version")'
+      - run: sudo apt-get update && sudo apt-get install -y libarchive-tools zstd xvfb x11-utils xauth dbus-x11
       - run: npm ci
       - run: npm test
-      - run: npm run build:linux
+      - run: npm run build:all
+      - name: Smoke test AppImage without requiring FUSE
+        run: bash scripts/smoke-appimage.sh dist/*.AppImage
+      - name: Smoke test native Arch package
+        run: docker run --rm -v "$PWD/dist:/packages:ro" -v "$PWD/scripts:/scripts:ro" archlinux:base bash /scripts/smoke-arch.sh
       - name: Prepare release notes and checksum
         shell: bash
         run: |
           set -euo pipefail
           version=$(node -p 'require("./package.json").version')
           cd dist
-          sha256sum "pofi_${version}_amd64.deb" > SHA256SUMS
+          sha256sum "pofi_${version}_amd64.deb" "pofi-${version}-x86_64.pkg.tar.zst" "Pofi-${version}-x86_64.AppImage" > SHA256SUMS
           cd ..
           cat > "$RUNNER_TEMP/release-notes.md" <<'NOTES'
-          Pofi is a focus and walking companion for Ubuntu, with an optional iPhone companion.
+          Pofi is a focus and walking companion for Linux, with an optional iPhone companion.
 
-          ### Download and install
-          Download **pofi_1.3.1_amd64.deb** from Assets below. It includes its runtime; Node.js is not required to run the desktop app.
+          ### Choose your Linux download
+          - **Omarchy / Arch / EndeavourOS / Manjaro (x86_64):** `pofi-VERSION-x86_64.pkg.tar.zst`
+            ```sh
+            sudo pacman -U ./pofi-VERSION-x86_64.pkg.tar.zst
+            ```
+          - **Debian / Ubuntu / Mint (Intel/AMD 64-bit):** `pofi_VERSION_amd64.deb`
+            ```sh
+            sudo apt install ./pofi_VERSION_amd64.deb
+            ```
+          - **Other modern glibc Linux distributions (x86_64):** `Pofi-VERSION-x86_64.AppImage`
+            ```sh
+            chmod +x Pofi-VERSION-x86_64.AppImage
+            ./Pofi-VERSION-x86_64.AppImage
+            ```
+            If FUSE 2 is unavailable, use `APPIMAGE_EXTRACT_AND_RUN=1 ./Pofi-VERSION-x86_64.AppImage`.
 
-          On Ubuntu 22.04 or newer (Intel/AMD 64-bit), open a terminal in the download folder:
-          ```sh
-          sudo apt install ./pofi_1.3.1_amd64.deb
-          ```
-          Open **Pofi** from Applications. Verify the download with `sha256sum -c SHA256SUMS` if desired.
+          No Node.js installation is needed to run these downloads. Verify downloads with `sha256sum -c SHA256SUMS` (download all listed assets or verify only the matching line).
 
-          ### Features
-          - Adjustable focus and walk durations (default 45 / 5 minutes).
-          - Early walking and early return to focus; automatic focus restart after the walk.
-          - Focus overtime, session totals and a session log that clears on quit.
-          - Audible reminders and native Ubuntu notifications.
-          - QR-paired iPhone companion over local Wi-Fi or your own private Render relay.
-          - Stable private phone bookmarks and first-party pairing cookies.
-          - Source-based in-app updates (Git, Node.js 24+, npm and PolicyKit are required for that optional feature).
+          ### Compatibility and features
+          - Native Wayland session selection for Hyprland/Omarchy, with X11 fallback/override.
+          - Distribution-aware source updates: pacman on Arch, dpkg on Debian, or replacement of a user-owned AppImage. Git, Node.js 24+, npm and appropriate build tools are needed only for these optional source updates.
+          - Adjustable focus/walk timers, early walking/return, overtime and per-session statistics.
+          - Audible reminders, native Linux notifications and stable QR pairing with iPhone.
 
-          Internet pairing requires a separate relay deployment. Each friend should use their own relay/key, rather than sharing another person's timer. On iPhone keep Pofi foregrounded with the screen awake for sound; locked-screen push is not implemented.
+          The Arch package is installed and its real Electron window/shared timer smoke-tested in a clean Arch container before publication. The AppImage is also launch-tested in CI. This is not a claim of physical Omarchy/Hyprland or every distribution being tested. Native Ubuntu/Debian packages remain available.
 
-          This release is for **Ubuntu amd64**. It is not a Windows, macOS or App Store installer.
+          Internet pairing requires your own relay/key. On iPhone keep Pofi foregrounded with the screen awake for sound; locked-screen push is not implemented. These assets are **Linux x86_64**, not ARM, Windows or macOS installers. Alpine/musl and obsolete distributions are not supported by these binaries.
           NOTES
+          sed -i "s/VERSION/$version/g" "$RUNNER_TEMP/release-notes.md"
       - name: Upload assets and publish
         env:
           GH_TOKEN: ${{ github.token }}
@@ -73,5 +85,5 @@ jobs:
           else
             gh release create "$TAG" --verify-tag --draft --title "Pofi $version" --notes-file "$RUNNER_TEMP/release-notes.md"
           fi
-          gh release upload "$TAG" "dist/pofi_${version}_amd64.deb" dist/SHA256SUMS --clobber
+          gh release upload "$TAG" "dist/pofi_${version}_amd64.deb" "dist/pofi-${version}-x86_64.pkg.tar.zst" "dist/Pofi-${version}-x86_64.AppImage" dist/SHA256SUMS --clobber
           gh release edit "$TAG" --draft=false --latest

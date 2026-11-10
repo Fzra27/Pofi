@@ -1,7 +1,7 @@
 {
   "name": "pofi",
-  "version": "1.3.1",
-  "description": "A little focus. A little movement. Your potato companion for Ubuntu and iPhone.",
+  "version": "1.4.0",
+  "description": "A little focus. A little movement. Your potato companion for Linux and iPhone.",
   "main": "desktop/main.cjs",
   "author": "Pofi contributors",
   "license": "MIT",
@@ -10,9 +10,13 @@
     "start": "node server.cjs",
     "desktop": "electron .",
     "test": "node --test test/*.test.cjs",
-    "build:linux": "electron-builder --linux deb --publish never",
+    "build:linux": "electron-builder --linux deb --x64 --publish never",
     "postinstall": "install-electron",
-    "relay": "node relay.cjs"
+    "relay": "node relay.cjs",
+    "build:deb": "electron-builder --linux deb --x64 --publish never",
+    "build:arch": "electron-builder --linux pacman --x64 --publish never",
+    "build:appimage": "electron-builder --linux AppImage --x64 --publish never",
+    "build:all": "electron-builder --linux deb pacman AppImage --x64 --publish never"
   },
   "dependencies": {
     "qrcode": "1.5.4"
@@ -36,7 +40,9 @@
     ],
     "linux": {
       "target": [
-        "deb"
+        "deb",
+        "pacman",
+        "AppImage"
       ],
       "category": "Utility",
       "icon": "public/icon.png",
@@ -55,6 +61,33 @@
         "libuuid1",
         "libsecret-1-0"
       ]
+    },
+    "pacman": {
+      "artifactName": "pofi-${version}-x86_64.pkg.tar.zst",
+      "compression": "zstd",
+      "depends": [
+        "gtk3",
+        "nss",
+        "libxss",
+        "libxtst",
+        "libnotify",
+        "libsecret",
+        "alsa-lib",
+        "mesa",
+        "libxkbcommon",
+        "libdrm",
+        "at-spi2-core",
+        "libcups",
+        "libappindicator-gtk3",
+        "xdg-utils"
+      ],
+      "fpm": [
+        "--description",
+        "Pofi focus and walking companion for Linux"
+      ]
+    },
+    "appImage": {
+      "artifactName": "Pofi-${version}-x86_64.AppImage"
     }
   },
   "desktopName": "pofi.desktop",

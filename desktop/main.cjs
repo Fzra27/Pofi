@@ -11,6 +11,12 @@ const {
 } = require("electron");
 const path = require("node:path");
 const { startServer } = require("../server.cjs");
+// Prefer the session's native Wayland backend (Omarchy/Hyprland), retaining an explicit X11 override.
+if (
+  process.platform === "linux" &&
+  !app.commandLine.hasSwitch("ozone-platform")
+)
+  app.commandLine.appendSwitch("ozone-platform", "auto");
 let win,
   service,
   tray,
@@ -146,7 +152,7 @@ else {
           cancelId: 0,
           message: "Download, build and install Pofi from GitHub?",
           detail:
-            "Your current session ends when you quit. Ubuntu will ask for your password to install the package. Reopen Pofi after installation.",
+            "Your current session ends when you quit. Your system may ask for your password to install the package. Reopen Pofi after installation.",
         });
         if (answer.response !== 1) return { cancelled: true };
         return updater.install();

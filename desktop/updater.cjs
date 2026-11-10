@@ -91,6 +91,45 @@ async function nodeEnvironment() {
     "Node.js 24+ and npm are needed for source updates. Install them with nvm, then retry.",
   );
 }
+function installationPlan({
+  appImage = process.env.APPIMAGE,
+  exists = fs.existsSync,
+} = {}) {
+  if (appImage) {
+    if (
+      !path.isAbsolute(appImage) ||
+      !appImage.toLowerCase().endsWith(".appimage")
+    )
+      throw new Error(
+        "Cannot safely identify the running AppImage. Download the update manually.",
+      );
+    return {
+      kind: "appimage",
+      script: "build:appimage",
+      filename: (version) => `Pofi-${version}-x86_64.AppImage`,
+      destination: appImage,
+    };
+  }
+  if (exists("/usr/bin/pacman"))
+    return {
+      kind: "arch",
+      script: "build:arch",
+      filename: (version) => `pofi-${version}-x86_64.pkg.tar.zst`,
+      installer: "/usr/bin/pacman",
+      args: (file) => ["-U", "--noconfirm", file],
+    };
+  if (exists("/usr/bin/dpkg"))
+    return {
+      kind: "deb",
+      script: "build:deb",
+      filename: (version) => `pofi_${version}_amd64.deb`,
+      installer: "/usr/bin/dpkg",
+      args: (file) => ["--install", file],
+    };
+  throw new Error(
+    "Use the AppImage edition for in-app updates on this distribution. Native package updates support Debian/Ubuntu and Arch/Omarchy.",
+  );
+}
 class Updater {
   constructor({
     workDir,
@@ -98,6 +137,7 @@ class Updater {
     onProgress = () => {},
     runner = run,
     environment = nodeEnvironment,
+    plan = installationPlan,
   }) {
     Object.assign(this, {
       workDir,
@@ -105,6 +145,7 @@ class Updater {
       onProgress,
       runner,
       environment,
+      plan,
     });
     this.busy = false;
     this.target = null;
@@ -169,37 +210,46 @@ class Updater {
     this.busy = true;
     try {
       if (process.arch !== "x64" || process.platform !== "linux")
-        throw new Error(
-          "In-app package installation currently supports Ubuntu amd64.",
-        );
+        throw new Error("In-app installation currently supports Linux x86_64.");
+      const plan = this.plan();
+      if (plan.kind === "appimage")
+        fs.accessSync(path.dirname(plan.destination), fs.constants.W_OK);
       const { npm, env } = await this.environment();
       const cwd = this.target.dir;
       this.onProgress("Downloading verified dependencies…");
       await this.runner(npm, ["ci"], { cwd, env });
       this.onProgress("Running update tests…");
       await this.runner(npm, ["test"], { cwd, env });
-      this.onProgress("Building your Ubuntu package…");
-      await this.runner(npm, ["run", "build:linux"], { cwd, env });
-      const file = path.join(
-        cwd,
-        "dist",
-        `pofi_${this.target.version}_amd64.deb`,
+      this.onProgress(
+        `Building your ${plan.kind === "arch" ? "Arch/Omarchy" : plan.kind === "deb" ? "Debian/Ubuntu" : "AppImage"} package…`,
       );
+      await this.runner(npm, ["run", plan.script], { cwd, env });
+      const file = path.join(cwd, "dist", plan.filename(this.target.version));
       if (!fs.statSync(file).isFile())
         throw new Error("Update package was not produced.");
-      this.onProgress("Approve the Ubuntu password prompt to install…");
-      await this.runner("pkexec", ["/usr/bin/dpkg", "--install", file], {
-        cwd,
-        env,
-        timeout: 300000,
-      });
-      this.onProgress(
-        "Update installed. Quit Pofi and reopen it from Applications.",
-      );
+      if (plan.kind === "appimage") {
+        const temporary =
+          plan.destination + ".update-" + require("node:crypto").randomUUID();
+        try {
+          fs.copyFileSync(file, temporary, fs.constants.COPYFILE_EXCL);
+          fs.chmodSync(temporary, 0o755);
+          fs.renameSync(temporary, plan.destination);
+        } finally {
+          fs.rmSync(temporary, { force: true });
+        }
+      } else {
+        this.onProgress("Approve the system password prompt to install…");
+        await this.runner("pkexec", [plan.installer, ...plan.args(file)], {
+          cwd,
+          env,
+          timeout: 300000,
+        });
+      }
+      this.onProgress("Update installed. Quit Pofi and reopen it.");
       return { installed: true, version: this.target.version };
     } finally {
       this.busy = false;
     }
   }
 }
-module.exports = { Updater, newer, nodeEnvironment };
+module.exports = { Updater, newer, nodeEnvironment, installationPlan };
