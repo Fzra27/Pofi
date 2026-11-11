@@ -60,7 +60,7 @@ jobs:
           ### Compatibility and features
           - Native Wayland session selection for Hyprland/Omarchy, with X11 fallback/override.
           - Distribution-aware source updates: pacman on Arch, dpkg on Debian, or replacement of a user-owned AppImage. Git, Node.js 24+, npm and appropriate build tools are needed only for these optional source updates.
-          - Adjustable focus/walk timers, early walking/return, overtime and per-session statistics.
+          - Adjustable focus/walk timers, early walking/return, manual phase transitions and overtime and per-session statistics.
           - Audible reminders, native Linux notifications and stable QR pairing with iPhone.
 
           The Arch package is installed and its real Electron window/shared timer smoke-tested in a clean Arch container before publication. The AppImage is also launch-tested in CI. This is not a claim of physical Omarchy/Hyprland or every distribution being tested. Native Ubuntu/Debian packages remain available.

@@ -96,7 +96,7 @@ function alertEvent(event) {
   toast(
     walk
       ? "Time to stand up and walk!"
-      : "Your walk is done. Your next focus session has started.",
+      : "Your walk is done. Extra walking time counts until you start focusing.",
   );
   if (
     !window.pofiDesktop &&
@@ -218,7 +218,7 @@ function render() {
         : s.phaseStarted
           ? "Continue focusing →"
           : "Start focusing →";
-  $("early-focus").hidden = mode !== "break";
+  $("early-focus").hidden = mode !== "break" || expired;
   $("early-focus").disabled = !connected || !s.phaseStarted;
   $("early-walk").hidden = mode !== "focus" || expired;
   $("early-walk").disabled = !connected || !s.phaseStarted;
@@ -235,7 +235,7 @@ function render() {
     ? "Overtime counts toward your session total. You choose when to switch."
     : mode === "focus"
       ? `${s.focusMinutes} minutes of focus. ${s.breakMinutes} minutes on your feet.`
-      : "Your next focus session starts automatically when this walk ends.";
+      : "When the walk ends, extra time keeps counting until you start focusing.";
   $("mascot-caption").textContent = overdue
     ? "Getting a little wilted… let’s walk!"
     : mode === "break"

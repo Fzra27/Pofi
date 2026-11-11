@@ -8,15 +8,15 @@ A little focus. A little movement. An English-language focus companion for **Lin
 
 | Distribution                           | File                            | Install / launch                                                            |
 | -------------------------------------- | ------------------------------- | --------------------------------------------------------------------------- |
-| Omarchy, Arch, EndeavourOS, Manjaro    | `pofi-1.4.0-x86_64.pkg.tar.zst` | `sudo pacman -U ./pofi-1.4.0-x86_64.pkg.tar.zst`                            |
-| Debian, Ubuntu, Mint                   | `pofi_1.4.0_amd64.deb`          | `sudo apt install ./pofi_1.4.0_amd64.deb`                                   |
-| Other modern glibc Linux distributions | `Pofi-1.4.0-x86_64.AppImage`    | `chmod +x ./Pofi-1.4.0-x86_64.AppImage` then `./Pofi-1.4.0-x86_64.AppImage` |
+| Omarchy, Arch, EndeavourOS, Manjaro    | `pofi-1.4.1-x86_64.pkg.tar.zst` | `sudo pacman -U ./pofi-1.4.1-x86_64.pkg.tar.zst`                            |
+| Debian, Ubuntu, Mint                   | `pofi_1.4.1_amd64.deb`          | `sudo apt install ./pofi_1.4.1_amd64.deb`                                   |
+| Other modern glibc Linux distributions | `Pofi-1.4.1-x86_64.AppImage`    | `chmod +x ./Pofi-1.4.1-x86_64.AppImage` then `./Pofi-1.4.1-x86_64.AppImage` |
 
 ### Omarchy / Arch: install from the terminal
 
 ```sh
-curl -fLO https://github.com/Fzra27/Pofi/releases/download/v1.4.0/pofi-1.4.0-x86_64.pkg.tar.zst
-sudo pacman -U ./pofi-1.4.0-x86_64.pkg.tar.zst
+curl -fLO https://github.com/Fzra27/Pofi/releases/download/v1.4.1/pofi-1.4.1-x86_64.pkg.tar.zst
+sudo pacman -U ./pofi-1.4.1-x86_64.pkg.tar.zst
 ```
 
 The native Arch package declares Arch library dependencies and adds Pofi to the application launcher. Use it instead of converting a Debian package. This packaging is independent of Omarchy's version. Pofi selects the session's native Wayland backend automatically (Hyprland) or X11 when appropriate. An explicit `--ozone-platform=x11` remains available for XWayland troubleshooting. Native notifications use the desktop's standard D-Bus notification service.
@@ -26,7 +26,7 @@ The native Arch package declares Arch library dependencies and adds Pofi to the 
 AppImage is an alternative for Omarchy and distributions without a native package here. It still needs a graphical Linux session with GTK/NSS/audio libraries and glibc, and normally uses FUSE 2. If FUSE 2 is unavailable, use the runtime's extraction mode instead:
 
 ```sh
-APPIMAGE_EXTRACT_AND_RUN=1 ./Pofi-1.4.0-x86_64.AppImage
+APPIMAGE_EXTRACT_AND_RUN=1 ./Pofi-1.4.1-x86_64.AppImage
 ```
 
 Keep a portable AppImage in a directory you own if you want in-app updates. These binaries do not cover ARM/aarch64, Alpine/musl, obsolete Linux distributions, Windows or macOS. This is not a claim that every Linux distribution or physical Hyprland/GPU combination has been tested.
@@ -41,7 +41,7 @@ When focus finishes, Pofi chimes once and keeps counting **+ overtime** in the f
 
 **Return early:** During a walk, click **“Start focusing early”** to record the actual walking time and immediately start a fresh full Focus period. This also works when the walk is paused; unused walking time is not counted or carried over.
 
-When the walk finishes, Pofi chimes and **automatically starts a new full focus period using your selected Focus duration**. For example, leaving a 45-minute focus period with 5 minutes remaining starts a fresh 5-minute walk, then a fresh 45-minute focus period. Late timer ticks are split at the walking deadline so time is counted once in the correct phase. Focus overtime still requires a manual switch to walking. No window is raised automatically; notifications raise the window only if you click them. Pause remains a separate action. Ignoring the focus reminder for a minute makes Pofi wilt; starting the walk revives the potato.
+When the walk finishes, Pofi chimes once and **stays in the walking phase**, showing **+ overtime**, just like focus overtime. Extra walking seconds are included in the live walking total and, when you end the walk, its session log entry. No focus session is counted and no focus time is charged until you click **“I’m back. Start focusing”** (or use **“Start focusing early”** before expiry). That click starts the full selected Focus duration. No phase or window changes automatically at the deadline. For example, a 5-minute walk followed by `+02:15` is logged as 7 minutes 15 seconds of walking. These are time totals, not measured distance or steps. Pause remains a separate action before expiry. Ignoring the focus reminder for a minute makes Pofi wilt; starting the walk revives the potato.
 
 ## This session’s totals and log
 
@@ -68,7 +68,7 @@ git pull --ff-only
 npm ci
 npm test
 npm run build:deb
-sudo apt install ./dist/pofi_1.4.0_amd64.deb
+sudo apt install ./dist/pofi_1.4.1_amd64.deb
 ```
 
 ## iPhone: stable pairing from any network (1.3+)
@@ -110,7 +110,7 @@ npm run build:all
 
 ## Validation
 
-`npm test` covers early walking before focus expires, full/default and custom walking durations, automatic focus restart, late tick accounting, focus overtime, exactly-once alerts, pauses, session counts/logs, preferences-only persistence, paired-device access, stable local/internet pairing, relay authentication, host offline/reconnect and relay/desktop restarts, update version ordering and update failures that prevent privileged installation. Desktop and phone browser flows are checked with Chromium emulation; native notifications were exercised over a test D-Bus service. Tagged releases additionally install the native Arch package in a clean Arch container and exercise the actual Electron window/shared timer on X11; an AppImage launch test exercises the portable executable in extraction mode. Omarchy’s Arch/Hyprland basis was checked against its official manual; an actual Omarchy/Hyprland desktop is not available in CI. A real physical iPhone and the user's Ubuntu password dialog still require device-side confirmation. The local HTTP iOS foreground limitation remains unchanged.
+`npm test` covers early walking before focus expires, full/default and custom walking durations, manual focus restart after walking, late tick walking overtime accounting, focus overtime, exactly-once alerts, pauses, session counts/logs, preferences-only persistence, paired-device access, stable local/internet pairing, relay authentication, host offline/reconnect and relay/desktop restarts, update version ordering and update failures that prevent privileged installation. Desktop and phone browser flows are checked with Chromium emulation; native notifications were exercised over a test D-Bus service. Tagged releases additionally install the native Arch package in a clean Arch container and exercise the actual Electron window/shared timer on X11; an AppImage launch test exercises the portable executable in extraction mode. Omarchy’s Arch/Hyprland basis was checked against its official manual; an actual Omarchy/Hyprland desktop is not available in CI. A real physical iPhone and the user's Ubuntu password dialog still require device-side confirmation. The local HTTP iOS foreground limitation remains unchanged.
 
 ### Recover pairing after upgrading from 1.3.0
 

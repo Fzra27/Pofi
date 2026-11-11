@@ -61,28 +61,9 @@ class Timer extends EventEmitter {
     const delta = Math.max(0, now - this.lastTick);
     this.lastTick = now;
     if (!s.running) return;
-    const walkDuration = s.breakMinutes * 60000;
-    if (s.mode === "break" && s.phaseMs + delta >= walkDuration) {
-      const walkDelta = walkDuration - s.phaseMs;
-      const focusDelta = delta - walkDelta;
-      s.walkMs += walkDelta;
-      s.phaseMs = walkDuration;
-      s.expired = true;
-      this.finish(now - focusDelta);
-      this.phase("focus", true);
-      s.phaseMs = focusDelta;
-      s.focusMs += focusDelta;
-      s.remaining = Math.max(
-        0,
-        Math.ceil((s.focusMinutes * 60000 - focusDelta) / 1000),
-      );
-      this.announce("return");
-      this.emit("change");
-    } else {
-      s.phaseMs += delta;
-      if (s.mode === "focus") s.focusMs += delta;
-      else s.walkMs += delta;
-    }
+    s.phaseMs += delta;
+    if (s.mode === "focus") s.focusMs += delta;
+    else s.walkMs += delta;
     const duration =
       (s.mode === "focus" ? s.focusMinutes : s.breakMinutes) * 60000;
     s.remaining = Math.max(0, Math.ceil((duration - s.phaseMs) / 1000));
@@ -91,7 +72,7 @@ class Timer extends EventEmitter {
       s.expired = true;
       s.overdueAt = now - Math.max(0, s.phaseMs - duration);
       if (s.mode === "focus") s.completed++;
-      this.announce("walk");
+      this.announce(s.mode === "focus" ? "walk" : "return");
     }
   }
 

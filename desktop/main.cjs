@@ -90,7 +90,7 @@ else {
               : "Pofi — Come back refreshed!",
             body: walk
               ? `Stand up and take a ${service.timer.state.breakMinutes}-minute walk.`
-              : "Your walking break is over. Your next focus session has started.",
+              : "Your walking break is over. Extra walking time counts until you start focusing.",
             silent: !service.timer.state.sound,
             icon,
             urgency: "critical",

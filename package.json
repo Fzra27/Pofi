@@ -1,6 +1,6 @@
 {
   "name": "pofi",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "A little focus. A little movement. Your potato companion for Linux and iPhone.",
   "main": "desktop/main.cjs",
   "author": "Pofi contributors",
